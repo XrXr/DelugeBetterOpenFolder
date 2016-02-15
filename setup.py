@@ -46,8 +46,10 @@ __author_email__ = "xrsquared@gmail.com"
 __version__ = "0.1"
 __url__ = "https://github.com/XrXr/DelugeBetterOpenFolder"
 __license__ = "GPLv3"
-__description__ = ""
-__long_description__ = """"""
+__description__ = "Improve Open Folder for gtk"
+__long_description__ = """Better Open Folder for deluge-gtk.
+Select file after opening folder. If there is a folder in the torrent, open that
+instead of the containing folder."""
 __pkg_data__ = {"deluge.plugins."+__plugin_name__.lower(): ["template/*", "data/*"]}
 
 setup(

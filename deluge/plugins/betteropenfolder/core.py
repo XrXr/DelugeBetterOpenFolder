@@ -46,7 +46,7 @@ import deluge.common
 from deluge.core.rpcserver import export
 
 DEFAULT_PREFS = {
-    "open_method": "deluge"
+    "open_method": "freedesktop"
 }
 
 class Core(CorePluginBase):
