@@ -1,0 +1,16 @@
+setup.py
+BetterOpenFolder.egg-info/PKG-INFO
+BetterOpenFolder.egg-info/SOURCES.txt
+BetterOpenFolder.egg-info/dependency_links.txt
+BetterOpenFolder.egg-info/entry_points.txt
+BetterOpenFolder.egg-info/namespace_packages.txt
+BetterOpenFolder.egg-info/top_level.txt
+deluge/__init__.py
+deluge/plugins/__init__.py
+deluge/plugins/betteropenfolder/__init__.py
+deluge/plugins/betteropenfolder/common.py
+deluge/plugins/betteropenfolder/core.py
+deluge/plugins/betteropenfolder/gtkui.py
+deluge/plugins/betteropenfolder/webui.py
+deluge/plugins/betteropenfolder/data/betteropenfolder.js
+deluge/plugins/betteropenfolder/data/config.glade
