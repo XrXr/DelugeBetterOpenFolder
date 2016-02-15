@@ -71,4 +71,3 @@ class Core(CorePluginBase):
         """Returns the config dictionary"""
         return self.config.config
 
-
