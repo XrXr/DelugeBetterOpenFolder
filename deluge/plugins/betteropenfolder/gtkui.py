@@ -124,7 +124,8 @@ class GtkUI(GtkPluginBase):
             self.dispatch_open(*open_direction)
 
         for torrent_id in component.get("TorrentView").get_selected_torrents():
-            component.get("SessionProxy").get_torrent_status(torrent_id, ["save_path", "files"]).addCallback(_on_torrent_status)
+            component.get("SessionProxy").get_torrent_status(torrent_id,
+                ["save_path", "files"]).addCallback(_on_torrent_status)
 
     def thunar_open(self, folder, file):
         if not file:
@@ -144,9 +145,9 @@ class GtkUI(GtkPluginBase):
         self.open_folder_widget.handler_unblock_by_func(
             self.menubar.on_menuitem_open_folder_activate)
 
-        self.open_folder_widget.disconnect_handler(self.open_folder_handler_id)
+        self.open_folder_widget.disconnect(self.open_folder_handler_id)
 
-        component.get("Preferences").remove_page("ThunarOpen")
+        component.get("Preferences").remove_page("Better Open Folder")
         component.get("PluginManager").deregister_hook("on_apply_prefs", self.on_apply_prefs)
         component.get("PluginManager").deregister_hook("on_show_prefs", self.on_show_prefs)
 
