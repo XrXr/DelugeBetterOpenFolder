@@ -62,7 +62,30 @@ class GtkUI(GtkPluginBase):
         component.get("PluginManager").register_hook("on_apply_prefs", self.on_apply_prefs)
         component.get("PluginManager").register_hook("on_show_prefs", self.on_show_prefs)
 
-        try :
+        self.thunar_radio = self.glade.get_widget("thunar")
+        self.freedesktop_radio = self.glade.get_widget("freedesktop")
+
+        self.menubar = component.get("MenuBar")
+        self.open_folder_widget = self.menubar.torrentmenu_glade.get_widget(
+            "menuitem_open_folder")
+        self.open_folder_widget.handler_block_by_func(
+            self.menubar.on_menuitem_open_folder_activate)
+        self.open_folder_handler_id = self.open_folder_widget.connect(
+            "activate", self.open_folder)
+
+        self.pending_open = []  # opens before config is obtained
+        client.thunaropen.get_config().addCallback(self.cb_first_pref_get)
+
+        self.get_dbus()
+
+    def get_dbus(self):
+        self.xfce_file_manager = None
+        self.file_manager = None
+
+        self.thunar_radio.set_sensitive(True)
+        self.freedesktop_radio.set_sensitive(True)
+
+        try:
             bus = dbus.SessionBus()
             xfce_file_manager_object = bus.get_object('org.xfce.FileManager', '/org/xfce/FileManager')
             self.xfce_file_manager = dbus.Interface(xfce_file_manager_object, 'org.xfce.FileManager')
@@ -72,22 +95,33 @@ class GtkUI(GtkPluginBase):
         except Exception:
             log.debug("Something went wrong trying to get dbus interfaces")
 
+        if not self.file_manager:
+            self.freedesktop_radio.set_sensitive(False)
+        if not self.xfce_file_manager:
+            self.thunar_radio.set_sensitive(False)
 
+    def cb_first_pref_get(self, config):
+        self.open_method = config["open_method"]
+        for e in self.pending_open:
+            self.dispatch_open(*e)
+        self.pending_open = None
 
-        self.menubar = component.get("MenuBar")
-        self.open_folder_widget = self.menubar.torrentmenu_glade.get_widget(
-            "menuitem_open_folder")
-
-        self.open_folder_widget.handler_block_by_func(
-            self.menubar.on_menuitem_open_folder_activate)
-
-        self.open_folder_handler_id = self.open_folder_widget.connect(
-            "activate", self.open_folder)
+    def dispatch_open(self, folder, file):
+        if self.open_method == "thunar" and self.xfce_file_manager:
+            self.thunar_open(folder, file)
+        elif self.open_method == "freedesktop" and self.file_manager:
+            self.freedesktop_open(folder, file)
+        else:
+            if self.open_method != "deluge":
+                log.debug("Selected open method broke, falling back to deluge")
+            self.deluge_open(folder, file)
 
     def open_folder(self, data=None):
         def _on_torrent_status(status):
-            self.thunar_open(*how_to_open(status["save_path"], status["files"]))
-            self.freedesktop_open(*how_to_open(status["save_path"], status["files"]))
+            open_direction = how_to_open(status["save_path"], status["files"])
+            if self.pending_open is not None:
+                self.pending_open.append(open_direction)
+            self.dispatch_open(*open_direction)
 
         for torrent_id in component.get("TorrentView").get_selected_torrents():
             component.get("SessionProxy").get_torrent_status(torrent_id, ["save_path", "files"]).addCallback(_on_torrent_status)
@@ -108,10 +142,9 @@ class GtkUI(GtkPluginBase):
 
     def disable(self):
         self.open_folder_widget.handler_unblock_by_func(
-            menubar.on_menuitem_open_folder_activate)
+            self.menubar.on_menuitem_open_folder_activate)
 
         self.open_folder_widget.disconnect_handler(self.open_folder_handler_id)
-
 
         component.get("Preferences").remove_page("ThunarOpen")
         component.get("PluginManager").deregister_hook("on_apply_prefs", self.on_apply_prefs)
@@ -123,18 +156,20 @@ class GtkUI(GtkPluginBase):
         config = None
         for btn in self.glade.get_widget("thunar").get_group():
             if btn.get_active():
+                name = btn.get_name()
                 config = {
-                    "open_method": btn.get_name()
+                    "open_method": name
                 }
+                self.open_method = name
                 break
         client.thunaropen.set_config(config)
 
     def on_show_prefs(self):
+        self.get_dbus()
         client.thunaropen.get_config().addCallback(self.cb_pref_get_config)
 
     def cb_pref_get_config(self, config):
         "callback for on show_prefs"
-        log.info(config)
         self.glade.get_widget(config["open_method"]).set_active(True)
 
 def how_to_open(save_path, files):
