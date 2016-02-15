@@ -62,9 +62,16 @@ class GtkUI(GtkPluginBase):
         component.get("PluginManager").register_hook("on_apply_prefs", self.on_apply_prefs)
         component.get("PluginManager").register_hook("on_show_prefs", self.on_show_prefs)
 
-        bus = dbus.SessionBus()
-        xfce_file_manager_object = bus.get_object('org.xfce.FileManager', '/org/xfce/FileManager')
-        self.xfce_file_manager = dbus.Interface(xfce_file_manager_object, 'org.xfce.FileManager')
+        try :
+            bus = dbus.SessionBus()
+            xfce_file_manager_object = bus.get_object('org.xfce.FileManager', '/org/xfce/FileManager')
+            self.xfce_file_manager = dbus.Interface(xfce_file_manager_object, 'org.xfce.FileManager')
+
+            file_manager_object = bus.get_object('org.freedesktop.FileManager1', '/org/freedesktop/FileManager1')
+            self.file_manager = dbus.Interface(file_manager_object, 'org.freedesktop.FileManager1')
+        except Exception:
+            log.debug("Something went wrong trying to get dbus interfaces")
+
 
 
         self.menubar = component.get("MenuBar")
@@ -75,16 +82,29 @@ class GtkUI(GtkPluginBase):
             self.menubar.on_menuitem_open_folder_activate)
 
         self.open_folder_handler_id = self.open_folder_widget.connect(
-            "activate", self._open_folder)
+            "activate", self.open_folder)
 
-    def _open_folder(self, data=None):
+    def open_folder(self, data=None):
         def _on_torrent_status(status):
-            folder, file = how_to_open(status["save_path"], status["files"])
-            timestamp = gtk.get_current_event_time()
-            self.xfce_file_manager.DisplayFolderAndSelect(folder, file, '', '')
-            # deluge.common.open_file(folder, timestamp=timestamp)
+            self.thunar_open(*how_to_open(status["save_path"], status["files"]))
+            self.freedesktop_open(*how_to_open(status["save_path"], status["files"]))
+
         for torrent_id in component.get("TorrentView").get_selected_torrents():
             component.get("SessionProxy").get_torrent_status(torrent_id, ["save_path", "files"]).addCallback(_on_torrent_status)
+
+    def thunar_open(self, folder, file):
+        if not file:
+            return self.xfce_file_manager.DisplayFolder(folder, "", "")
+        self.xfce_file_manager.DisplayFolderAndSelect(folder, file, "", "")
+
+    def deluge_open(self, folder, _):
+        timestamp = gtk.get_current_event_time()
+        deluge.common.open_file(folder, timestamp=timestamp)
+
+    def freedesktop_open(self, folder, file):
+        if not file:
+            return self.file_manager.ShowFolders([folder], "")
+        return self.file_manager.ShowItems([os.path.join(folder, file)], '')
 
     def disable(self):
         self.open_folder_widget.handler_unblock_by_func(
@@ -121,4 +141,4 @@ def how_to_open(save_path, files):
     first_path = files[0]["path"]
     if len(files) == 1:
         return (save_path, first_path)
-    return os.path.join(save_path, os.path.dirname(first_path)), "."
+    return os.path.join(save_path, os.path.dirname(first_path)), None
