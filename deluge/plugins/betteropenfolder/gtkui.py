@@ -49,6 +49,7 @@ import deluge.component as component
 import deluge.common
 import pkg_resources
 import os.path
+from twisted.internet import reactor
 
 from common import get_resource
 
@@ -74,7 +75,21 @@ class GtkUI(GtkPluginBase):
             "activate", self.open_folder)
 
         self.pending_open = []  # opens before config is obtained
-        client.thunaropen.get_config().addCallback(self.cb_first_pref_get)
+
+        def maybe_defer(config):
+            """Delay calling `self.cb_first_pref_get` in development
+
+            This makes sure that the race condition between the first config
+            fetch and the user opening item is handled properly
+            """
+            import os
+            if "BETTER_OPEN_DEV" in os.environ:
+                log.info("development mode activated")
+                reactor.callLater(10, self.cb_first_pref_get, config)
+            else:
+                self.cb_first_pref_get(config)
+
+        client.betteropenfolder.get_config().addCallback(maybe_defer)
 
         self.get_dbus()
 
@@ -121,7 +136,8 @@ class GtkUI(GtkPluginBase):
             open_direction = how_to_open(status["save_path"], status["files"])
             if self.pending_open is not None:
                 self.pending_open.append(open_direction)
-            self.dispatch_open(*open_direction)
+            else:
+                self.dispatch_open(*open_direction)
 
         for torrent_id in component.get("TorrentView").get_selected_torrents():
             component.get("SessionProxy").get_torrent_status(torrent_id,
@@ -163,11 +179,11 @@ class GtkUI(GtkPluginBase):
                 }
                 self.open_method = name
                 break
-        client.thunaropen.set_config(config)
+        client.betteropenfolder.set_config(config)
 
     def on_show_prefs(self):
         self.get_dbus()
-        client.thunaropen.get_config().addCallback(self.cb_pref_get_config)
+        client.betteropenfolder.get_config().addCallback(self.cb_pref_get_config)
 
     def cb_pref_get_config(self, config):
         "callback for on show_prefs"
