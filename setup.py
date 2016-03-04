@@ -43,7 +43,7 @@ from setuptools import setup, find_packages
 __plugin_name__ = "BetterOpenFolder"
 __author__ = "Alan"
 __author_email__ = "xrsquared@gmail.com"
-__version__ = "0.1"
+__version__ = "0.2"
 __url__ = "https://github.com/XrXr/DelugeBetterOpenFolder"
 __license__ = "GPLv3"
 __description__ = "Improve Open Folder for gtk"
