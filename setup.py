@@ -43,14 +43,14 @@ from setuptools import setup, find_packages
 __plugin_name__ = "BetterOpenFolder"
 __author__ = "Alan"
 __author_email__ = "xrsquared@gmail.com"
-__version__ = "0.2"
+__version__ = "0.3"
 __url__ = "https://github.com/XrXr/DelugeBetterOpenFolder"
 __license__ = "GPLv3"
 __description__ = "Improve Open Folder for gtk"
 __long_description__ = """Better Open Folder for deluge-gtk.
 Select file after opening folder. If there is a folder in the torrent, open that
 instead of the containing folder."""
-__pkg_data__ = {"deluge.plugins."+__plugin_name__.lower(): ["template/*", "data/*"]}
+__pkg_data__ = {__plugin_name__.lower(): ["template/*", "data/*"]}
 
 setup(
     name=__plugin_name__,
@@ -63,15 +63,14 @@ setup(
     long_description=__long_description__ if __long_description__ else __description__,
 
     packages=find_packages(),
-    namespace_packages = ["deluge", "deluge.plugins"],
     package_data = __pkg_data__,
 
     entry_points="""
     [deluge.plugin.core]
-    %(plugin_name)s = deluge.plugins.%(plugin_module)s:CorePlugin
+    %(plugin_name)s = %(plugin_module)s:CorePlugin
     [deluge.plugin.gtkui]
-    %(plugin_name)s = deluge.plugins.%(plugin_module)s:GtkUIPlugin
+    %(plugin_name)s = %(plugin_module)s:GtkUIPlugin
     [deluge.plugin.web]
-    %(plugin_name)s = deluge.plugins.%(plugin_module)s:WebUIPlugin
+    %(plugin_name)s = %(plugin_module)s:WebUIPlugin
     """ % dict(plugin_name=__plugin_name__, plugin_module=__plugin_name__.lower())
 )

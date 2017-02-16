@@ -1,8 +1,8 @@
 
     [deluge.plugin.core]
-    BetterOpenFolder = deluge.plugins.betteropenfolder:CorePlugin
+    BetterOpenFolder = betteropenfolder:CorePlugin
     [deluge.plugin.gtkui]
-    BetterOpenFolder = deluge.plugins.betteropenfolder:GtkUIPlugin
+    BetterOpenFolder = betteropenfolder:GtkUIPlugin
     [deluge.plugin.web]
-    BetterOpenFolder = deluge.plugins.betteropenfolder:WebUIPlugin
+    BetterOpenFolder = betteropenfolder:WebUIPlugin
     
